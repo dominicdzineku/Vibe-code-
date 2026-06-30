@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Tracker</title>
+<style>
+  :root {
+    --bg: #0B1220;
+    --card: #121B2E;
+    --card-line: #1F2C45;
+    --ink: #E7ECF6;
+    --ink-soft: #7C8AA8;
+    --ink-faint: #4C5973;
+
+    --habit-1: #5B8DEF;
+    --habit-1-soft: rgba(91, 141, 239, 0.14);
+    --habit-2: #3E6FD9;
+    --habit-2-soft: rgba(62, 111, 217, 0.14);
+    --habit-3: #7BA6F4;
+    --habit-3-soft: rgba(123, 166, 244, 0.14);
+    --habit-4: #2A4F9E;
+    --habit-4-soft: rgba(42, 79, 158, 0.16);
+    --habit-5: #4F7FE0;
+    --habit-5-soft: rgba(79, 127, 224, 0.14);
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(91, 141, 239, 0.10), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(62, 111, 217, 0.08), transparent 45%),
+      var(--bg);
+    font-family: -apple-system, "Inter", "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 56px 20px 80px;
+    opacity: 0;
+    animation: pageIn 0.5s ease forwards;
+  }
+
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .wrap { width: 100%; max-width: 600px; }
+
+  header {
+    margin-bottom: 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--habit-1);
+    margin: 0 0 8px;
+  }
+
+  h1 { font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+  .subtitle { color: var(--ink-soft); font-size: 13.5px; margin: 6px 0 0; }
+
+  .sound-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid var(--card-line);
+    background: var(--card);
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .sound-toggle:hover { border-color: var(--habit-1); color: var(--ink); }
+  .sound-toggle svg { width: 17px; height: 17px; }
+
+  .habit-card {
+    background: var(--card);
+    border: 1px solid var(--card-line);
+    border-radius: 18px;
+    padding: 20px 20px 18px;
+    margin-bottom: 14px;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: cardIn 0.45s ease forwards;
+  }
+
+  .habit-card:nth-child(1) { animation-delay: 0.04s; }
+  .habit-card:nth-child(2) { animation-delay: 0.10s; }
+  .habit-card:nth-child(3) { animation-delay: 0.16s; }
+  .habit-card:nth-child(4) { animation-delay: 0.22s; }
+  .habit-card:nth-child(5) { animation-delay: 0.28s; }
+
+  @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+  .habit-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+
+  .habit-name-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px currentColor;
+    opacity: 0.9;
+  }
+
+  .habit-name {
+    font-size: 15.5px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    padding: 3px 0;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+  }
+
+  .habit-name:focus { border-bottom-color: var(--habit-1); }
+
+  .habit-count {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-track {
+    height: 5px;
+    border-radius: 8px;
+    background: #1A2538;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .days-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; }
+  .day-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .day-label { font-size: 10.5px; font-weight: 600; color: var(--ink-faint); letter-spacing: 0.02em; }
+
+  .check {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 1.5px solid var(--card-line);
+    background: #0E1626;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, border-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+
+  .check:hover { border-color: var(--ink-faint); }
+  .check:active { transform: scale(0.88); }
+  .check.checked { animation: pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  @keyframes pop {
+    0%   { transform: scale(0.7); }
+    55%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  .check svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .check.checked svg { opacity: 1; transform: scale(1); }
+
+  footer { text-align: center; margin-top: 28px; font-size: 12.5px; }
+
+  footer button {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 12.5px;
+    font-family: inherit;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  footer button:hover { color: var(--ink-soft); background: var(--card); }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--card);
+    border: 1px solid var(--card-line);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 10;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 420px) {
+    .day-label { font-size: 9px; }
+    .habit-name { font-size: 14.5px; }
+    h1 { font-size: 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">This week</p>
+      <h1>Habit Tracker</h1>
+      <p class="subtitle">Tap a day to check it off. Saves automatically.</p>
+    </div>
+    <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound" aria-pressed="true" title="Toggle sound">
+      <svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+      </svg>
+    </button>
+  </header>
+
+  <div id="habitList"></div>
+
+  <footer>
+    <button id="resetBtn">Reset this week</button>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = "habit-tracker-data-v1";
+  const SOUND_KEY = "habit-tracker-sound-v1";
+  const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const COLORS = [
+    { main: "var(--habit-1)", soft: "var(--habit-1-soft)" },
+    { main: "var(--habit-2)", soft: "var(--habit-2-soft)" },
+    { main: "var(--habit-3)", soft: "var(--habit-3-soft)" },
+    { main: "var(--habit-4)", soft: "var(--habit-4-soft)" },
+    { main: "var(--habit-5)", soft: "var(--habit-5-soft)" },
+  ];
+
+  const DEFAULT_HABITS = [
+    { name: "Prayer", days: [false, false, false, false, false, false, false] },
+    { name: "Drink water", days: [false, false, false, false, false, false, false] },
+    { name: "Move my body", days: [false, false, false, false, false, false, false] },
+    { name: "Read 10 minutes", days: [false, false, false, false, false, false, false] },
+    { name: "Sleep before midnight", days: [false, false, false, false, false, false, false] },
+  ];
+
+  function storageAvailable() {
+    try {
+      const k = "__storage_test__";
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  const HAS_STORAGE = storageAvailable();
+
+  function loadData() {
+    if (!HAS_STORAGE) return structuredClone(DEFAULT_HABITS);
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return structuredClone(DEFAULT_HABITS);
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || parsed.length === 0) return structuredClone(DEFAULT_HABITS);
+      const clean = parsed.filter(h => h && typeof h.name === "string" && Array.isArray(h.days));
+      return clean.length ? clean : structuredClone(DEFAULT_HABITS);
+    } catch (e) {
+      console.error("Could not read saved data, starting fresh.", e);
+      return structuredClone(DEFAULT_HABITS);
+    }
+  }
+
+  function saveData() {
+    if (!HAS_STORAGE) {
+      showToast("Storage unavailable — changes won't be saved");
+      return;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    } catch (e) {
+      console.error("Could not save data.", e);
+      showToast("Couldn't save — storage may be full");
+    }
+  }
+
+  let habits = loadData();
+  let soundOn = HAS_STORAGE ? (localStorage.getItem(SOUND_KEY) !== "off") : true;
+
+  let audioCtx = null;
+  function playTick(rising) {
+    if (!soundOn) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(rising ? 520 : 320, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(rising ? 780 : 220, audioCtx.currentTime + 0.09);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.13);
+    } catch (e) {
+      // Audio not supported — fail silently
+    }
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+
+  const checkIcon = `<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+  function render() {
+    const list = document.getElementById("habitList");
+    list.innerHTML = "";
+
+    habits.forEach((habit, hIndex) => {
+      const color = COLORS[hIndex % COLORS.length];
+      const checkedCount = habit.days.filter(Boolean).length;
+      const pct = Math.round((checkedCount / 7) * 100);
+
+      const card = document.createElement("div");
+      card.className = "habit-card";
+
+      card.innerHTML = `
+        <div class="habit-top">
+          <div class="habit-name-row">
+            <span class="dot" style="color:${color.main}"></span>
+            <input class="habit-name" value="${escapeAttr(habit.name)}" data-index="${hIndex}"
+                   maxlength="40" aria-label="Habit name" />
+          </div>
+          <span class="habit-count">${checkedCount}/7</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${pct}%; background:${color.main}"></div>
+        </div>
+        <div class="days-row">
+          ${habit.days.map((checked, dIndex) => `
+            <div class="day-cell">
+              <span class="day-label">${DAY_LABELS[dIndex]}</span>
+              <button class="check ${checked ? "checked" : ""}"
+                      style="${checked ? `background:${color.soft}; border-color:${color.main}; color:${color.main}` : ""}"
+                      data-habit="${hIndex}" data-day="${dIndex}"
+                      aria-pressed="${checked}"
+                      aria-label="${escapeAttr(habit.name)}, ${DAY_LABELS[dIndex]}, ${checked ? "completed" : "not completed"}">
+                ${checkIcon}
+              </button>
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+      list.appendChild(card);
+    });
+
+    document.querySelectorAll(".check").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const h = parseInt(btn.dataset.habit, 10);
+        const d = parseInt(btn.dataset.day, 10);
+        const newState = !habits[h].days[d];
+        habits[h].days[d] = newState;
+        playTick(newState);
+        saveData();
+        render();
+      });
+    });
+
+    document.querySelectorAll(".habit-name").forEach(input => {
+      input.addEventListener("change", () => {
+        const h = parseInt(input.dataset.index, 10);
+        const trimmed = input.value.trim();
+        habits[h].name = trimmed || "Untitled habit";
+        saveData();
+        render();
+      });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") input.blur();
+      });
+    });
+  }
+
+  function escapeAttr(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (confirm("Reset all checkmarks for this week?")) {
+      habits.forEach(h => h.days = h.days.map(() => false));
+      saveData();
+      render();
+      showToast("Week reset");
+    }
+  });
+
+  const soundToggle = document.getElementById("soundToggle");
+  function updateSoundIcon() {
+    soundToggle.setAttribute("aria-pressed", String(soundOn));
+    soundToggle.style.color = soundOn ? "var(--habit-1)" : "var(--ink-faint)";
+  }
+  soundToggle.addEventListener("click", () => {
+    soundOn = !soundOn;
+    if (HAS_STORAGE) localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off");
+    updateSoundIcon();
+    if (soundOn) playTick(true);
+  });
+
+  updateSoundIcon();
+  render();
+
+  if (!HAS_STORAGE) {
+    showToast("Storage unavailable — progress won't persist");
+  }
+</script>
+
+</body>
+</html>
